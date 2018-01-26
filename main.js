@@ -5,10 +5,10 @@ const categories = [ // a list of classes of documents
         "class": "hungry", // a class of documents
         "documents": // a list of documents
             [
-                "i'm hungry!", // a single document
-                "i want to eat!",
-                "feed me, baka!",
-                "what's for dinner?"
+                "I'm hungry!", // a single document
+                "I want to eat!",
+                "Feed me, baka!",
+                "What's for dinner?"
             ]
     },
     {
@@ -44,7 +44,7 @@ categories.forEach((category) => {
     category.documents.forEach((sentence) => {
         let w = tokenizer.tokenize(sentence);
         // add each word to the list of words
-        w.forEach((i) => words.push(i));
+        w.forEach(i => words.push(i));
         // add each document to the list of documents
         documents.push(sentence);
     });
@@ -53,3 +53,9 @@ categories.forEach((category) => {
 });
 
 // now stem and lower each word and remove duplicates
+
+// stem each word (also lowercases each word)
+words = words.map(word => natural.LancasterStemmer.stem(word));
+
+// remove duplicates
+words = Array.from(new Set(words));
