@@ -1,4 +1,5 @@
 const natural = require("natural");
+const neataptic = require("neataptic");
 
 const categories = [ // a list of classes of documents
     {
@@ -92,3 +93,17 @@ for (let i = 0; i < classes.length; i++) {
     output_row[i] = 1;
     outputs.push(output_row);
 }
+
+// train a neural network on the dataset
+
+let trainingSet = [];
+
+// create a json object for each input-output pair
+categories.forEach((category, classIndex) => {
+    category.documents.forEach((document, documentIndex) => {
+        let classification = {};
+        classification.input = bags[documentIndex];
+        classification.output = outputs[classIndex];
+        trainingSet.push(classification); // add the new json object to the training set
+    });
+});

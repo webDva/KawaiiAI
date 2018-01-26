@@ -15,6 +15,7 @@
     "description": "News Classy, machine learning curated news with a kind bias",
     "contributors": [],
     "dependencies": {
-        "natural": "^0.5.6"
+        "natural": "^0.5.6",
+        "neataptic": "^1.4.7"
     }
 }
