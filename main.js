@@ -33,7 +33,7 @@ const categories = [ // a list of classes of documents
 
 // organization of data structures
 let words = [];
-let documents = [];
+let documents = []; // each element in documents is an array of the tokenized words in a single document
 let classes = [];
 
 // processing each document
@@ -42,11 +42,11 @@ let classes = [];
 let tokenizer = new natural.TreebankWordTokenizer();
 categories.forEach((category) => {
     category.documents.forEach((sentence) => {
-        let w = tokenizer.tokenize(sentence);
+        let tokenizedWords = tokenizer.tokenize(sentence);
         // add each word to the list of words
-        w.forEach(i => words.push(i));
+        tokenizedWords.forEach(i => words.push(i));
         // add each document to the list of documents
-        documents.push(sentence);
+        documents.push(tokenizedWords);
     });
     // add each class to the list of classes. we know that there's no duplicates
     classes.push(category.class);
@@ -59,3 +59,25 @@ words = words.map(word => natural.LancasterStemmer.stem(word));
 
 // remove duplicates
 words = Array.from(new Set(words));
+
+// create a bag of words for each document/sentence
+
+let bags = []; // dataset
+
+documents.forEach((document) => {
+    let bag = []; // individual bag of words
+
+    // stem each word
+    document = document.map(word => natural.LancasterStemmer.stem(word));
+
+    // create a single bag of words vector
+    words.forEach((word) => {
+        if (document.includes(word))
+            bag.push(1);
+        else
+            bag.push(0);
+    });
+
+    // add the new bag of word to the list of bags that is the dataset
+    bags.push(bag);
+});
