@@ -81,3 +81,14 @@ documents.forEach((document) => {
     // add the new bag of word to the list of bags that is the dataset
     bags.push(bag);
 });
+
+// create a one-hot encoding of the categories
+
+let outputs = [] // a list of categories using one-hot encoding
+
+for (let i = 0; i < classes.length; i++) {
+    // create an empty array of zeros the length of the number of categories to act as a template
+    let output_row = new Array(classes.length).fill(0);
+    output_row[i] = 1;
+    outputs.push(output_row);
+}
