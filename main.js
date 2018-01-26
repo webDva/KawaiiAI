@@ -9,7 +9,15 @@ const categories = [ // a list of classes of documents
                 "I'm hungry!", // a single document
                 "I want to eat!",
                 "Feed me, baka!",
-                "What's for dinner?"
+                "What's for dinner?",
+                "Sandwich, please!",
+                "More, please!",
+                "Eating time!",
+                "Saber is hungry",
+                "feed saber!",
+                "I'm starving, Shirou.",
+                "Let's eat.",
+                "Let's have dinner"
             ]
     },
     {
@@ -18,7 +26,11 @@ const categories = [ // a list of classes of documents
             [
                 "i'm sleepy",
                 "i'm tired",
-                "i must rest"
+                "i must rest",
+                "I tire.",
+                "time to go to bed",
+                "time to retire to bed",
+                "i shall retire to bed"
             ]
     },
     {
@@ -27,7 +39,13 @@ const categories = [ // a list of classes of documents
             [
                 "i'm kawaii",
                 "baka!",
-                "pantsu"
+                "pantsu",
+                "idiot!",
+                "you're embarassing me!",
+                "don't look at my pantsu, baka!",
+                "chan",
+                "moe",
+                "san"
             ]
     }
 ];
@@ -107,3 +125,33 @@ categories.forEach((category, classIndex) => {
         trainingSet.push(classification); // add the new json object to the training set
     });
 });
+
+let NN = neataptic.architect.Perceptron(bags[0].length, 3, classes.length);
+
+NN.train(trainingSet, {
+    log: 10,
+    iterations: 90000
+});
+
+let cleanSentence = (sentence, wordList) => {
+    // tokenize the sentence
+    sentence = tokenizer.tokenize(sentence);
+
+    // stem each word
+    sentence = sentence.map(word => natural.LancasterStemmer.stem(word));
+
+    // create a single bag of words vector
+    let bag = [];
+    wordList.forEach((word) => {
+        if (sentence.includes(word))
+            bag.push(1);
+        else
+            bag.push(0);
+    });
+
+    return bag;
+};
+
+const intent1 = NN.activate(cleanSentence("Saber is hungry.", words));
+const intent2 = NN.activate(cleanSentence("i'm too tired for that right now", words));
+const intent3 = NN.activate(cleanSentence("baka, i'm embarrased!", words));
