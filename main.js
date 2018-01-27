@@ -1,12 +1,12 @@
 /* 
 Get the product out there. Move fast. Make the MVP as quick as possible.
-Remember your commitment to your missions.
+Remember your commitment to your missions. Keep typing.
 */
 
 const natural = require("natural");
 const neataptic = require("neataptic");
 
-const categories = [ // a list of classes of documents
+const exampledata = [ // a list of classes of documents
     {
         "class": "hungry", // a class of documents
         "documents": // a list of documents
@@ -68,82 +68,93 @@ const cleanSentence = (sentence, wordList) => {
     return bag;
 };
 
-/////////////////////////////////////////////////////
-/////////////////////////////////////////////////////
+/* uses extracted data from a data structure that looks like so:
 
-// organization of data structures
-let words = [];
-let documents = []; // each element in documents is an array of the tokenized words in a single document
-let classes = [];
+const extractedData = [ // a list of classes and their documents
+    {
+        "class": "hungry", // a class of documents
+        "documents": ["food", "eat"] // a list of documents
+    },
+    {
+        "class": "sleepy",
+        "documents": ["bed", "tired"]
+    }
+];
 
-// processing each document
+returns a new JSON object of data to be trained
+*/
+let wrangleData = (extractedData) => {
+    let processedData = {
+        "vocabulary": [], // tokenized and stemmed list of all words in the dataset
+        "documents": [], // each element is an array of the tokenized words in a single document
+        "classes": [], // categories
+        "bags": [],// bags of words for each document
+        "trainingset": [] // input-output pairs for the neataptic neural network
+    };
 
-categories.forEach((category) => {
-    category.documents.forEach((sentence) => {
-        // tokenize each word in the document
-        let tokenizedWords = tokenizeDocument(sentence);
-        // add each word to the list of words
-        tokenizedWords.forEach(i => words.push(i));
-        // add each document to the list of documents
-        documents.push(tokenizedWords);
+    // process each document in the list
+    extractedData.forEach((category) => {
+        category.documents.forEach((document) => {
+            // tokenize each word in the document
+            let tokenizedWords = tokenizeDocument(document);
+            // add each word to the list of words
+            tokenizedWords.forEach(i => processedData.vocabulary.push(i));
+            // add each document to the list of documents
+            processedData.documents.push(tokenizedWords);
+        });
+        // add each class to the list of classes. we know that there's no duplicates
+        processedData.classes.push(category.class);
     });
-    // add each class to the list of classes. we know that there's no duplicates
-    classes.push(category.class);
-});
 
-// now stem and lower each word and remove duplicates
+    // stem each word (also lowercases each word)
+    processedData.vocabulary = processedData.vocabulary.map(word => stemSingleWord(word));
 
-// stem each word (also lowercases each word)
-words = words.map(word => stemSingleWord(word));
+    // remove duplicates
+    processedData.vocabulary = Array.from(new Set(processedData.vocabulary));
 
-// remove duplicates
-words = Array.from(new Set(words));
-
-// create a bag of words for each document/sentence
-
-let bags = []; // dataset
-
-documents.forEach((document) => {
-    // stem each word
-    document = document.map(word => stemSingleWord(word));
-
-    // create an individual bag of words vector
-    const bag = makeBagOfWords(document, words);
-
-    // add the new bag of word to the list of bags that is the dataset
-    bags.push(bag);
-});
-
-// create a one-hot encoding of the categories
-
-let outputs = [] // a list of categories using one-hot encoding
-
-for (let i = 0; i < classes.length; i++) {
-    // create an empty array of zeros the length of the number of categories to act as a template
-    let output_row = new Array(classes.length).fill(0);
-    output_row[i] = 1;
-    outputs.push(output_row);
-}
-
-// train a neural network on the dataset
-
-let trainingSet = [];
-
-// create a json object for each input-output pair
-categories.forEach((category, classIndex) => {
-    category.documents.forEach((document) => {
-        // add a new json object to the training set
-        trainingSet.push({ "input": cleanSentence(document, words), "output": outputs[classIndex] });
+    // create a bag of words vector for each document
+    processedData.documents.forEach((document) => {
+        // create an individual bag of words vector and add it
+        processedData.bags.push(makeBagOfWords(document, processedData.vocabulary));
     });
-});
 
-let NN = neataptic.architect.Perceptron(bags[0].length, bags[0].length + classes.length, classes.length);
+    // create JSON objects of each input-output pair for the training set
 
-NN.train(trainingSet, {
+    // first, create one-hot encodings for the categories
+    let outputs = [];
+    for (let i = 0; i < processedData.classes.length; i++) {
+        // create an empty array of zeros the length of the number of categories to act as a template
+        let output_row = new Array(processedData.classes.length).fill(0);
+        output_row[i] = 1;
+        outputs.push(output_row);
+    }
+
+    // then add the input-output pairs
+    extractedData.forEach((category, classIndex) => {
+        category.documents.forEach((document) => {
+            processedData.trainingset.push({ "input": cleanSentence(document, processedData.vocabulary), "output": outputs[classIndex] });
+        });
+    });
+
+    // return the new JSON object
+    return processedData;
+};
+
+/////////////////////////////////////////////////////
+// keep going
+/////////////////////////////////////////////////////
+
+const dataset = wrangleData(exampledata);
+
+// create a perceptron neural network with input sizes of the size of the bag of words vectors, output sizes of
+// the number of categories/classes, and a hidden layer the size of the sum of the input and output sizes
+let NN = neataptic.architect.Perceptron(dataset.bags[0].length, dataset.bags[0].length + dataset.classes.length, dataset.classes.length);
+
+NN.train(dataset.trainingset, {
     log: 10,
     iterations: 100000
 });
 
-const intent1 = NN.activate(cleanSentence("food food", words));
-const intent2 = NN.activate(cleanSentence("bed", words));
-const intent3 = NN.activate(cleanSentence("neither", words));
+const intent1 = NN.activate(cleanSentence("let's eat food food", dataset.vocabulary));
+const intent2 = NN.activate(cleanSentence("go to bed baka", dataset.vocabulary));
+const intent3 = NN.activate(cleanSentence("neither", dataset.vocabulary));
