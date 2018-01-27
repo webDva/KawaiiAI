@@ -63,6 +63,20 @@ const makeBagOfWords = (document, vocabulary) => {
     return bag;
 };
 
+// makes a bag of words vector for a sentence
+const cleanSentence = (sentence, wordList) => {
+    // tokenize the sentence
+    sentence = tokenizeDocument(sentence);
+
+    // stem each word
+    sentence = sentence.map(word => stemSingleWord(word));
+
+    // create a single bag of words vector
+    const bag = makeBagOfWords(sentence, wordList);
+
+    return bag;
+};
+
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
@@ -73,9 +87,9 @@ let classes = [];
 
 // processing each document
 
-// first tokenize each word in the document
 categories.forEach((category) => {
     category.documents.forEach((sentence) => {
+        // tokenize each word in the document
         let tokenizedWords = tokenizeDocument(sentence);
         // add each word to the list of words
         tokenizedWords.forEach(i => words.push(i));
@@ -125,14 +139,10 @@ for (let i = 0; i < classes.length; i++) {
 let trainingSet = [];
 
 // create a json object for each input-output pair
-let wordIndex = 0; // corresponds and maps to each word in the vocabulary
 categories.forEach((category, classIndex) => {
     category.documents.forEach((document) => {
-        let classification = {};
-        classification.input = bags[wordIndex];
-        classification.output = outputs[classIndex];
-        trainingSet.push(classification); // add the new json object to the training set
-        wordIndex++;
+        // add a new json object to the training set
+        trainingSet.push({ "input": cleanSentence(document, words), "output": outputs[classIndex] });
     });
 });
 
@@ -140,21 +150,8 @@ let NN = neataptic.architect.Perceptron(bags[0].length, bags[0].length + classes
 
 NN.train(trainingSet, {
     log: 10,
-    iterations: 50000
+    iterations: 500000
 });
-
-let cleanSentence = (sentence, wordList) => {
-    // tokenize the sentence
-    sentence = tokenizeDocument(sentence);
-
-    // stem each word
-    sentence = sentence.map(word => stemSingleWord(word));
-
-    // create a single bag of words vector
-    const bag = makeBagOfWords(sentence, wordList);
-
-    return bag;
-};
 
 const intent1 = NN.activate(cleanSentence("Saber is hungry. Feed her! She's freaking starving!", words));
 const intent2 = NN.activate(cleanSentence("She is tired and sleepy.", words));
