@@ -11,46 +11,26 @@ const categories = [ // a list of classes of documents
         "class": "hungry", // a class of documents
         "documents": // a list of documents
             [
-                "I'm hungry!", // a single document
-                "I want to eat!",
-                "Feed me, baka!",
-                "What's for dinner?",
-                "Sandwich, please!",
-                "More, please!",
-                "Eating time!",
-                "Saber is hungry",
-                "feed saber!",
-                "I'm starving, Shirou.",
-                "Let's eat.",
-                "Let's have dinner"
+                "hungry", // a single document
+                "eat",
+                "Feed",
+                "dinner",
+                "Sandwich",
+                "Saber",
+                "starving"
             ]
     },
     {
         "class": "sleepy",
         "documents":
             [
-                "i'm sleepy",
-                "i'm tired",
-                "i must rest",
-                "I tire.",
-                "time to go to bed",
-                "time to retire to bed",
-                "i shall retire to bed"
-            ]
-    },
-    {
-        "class": "kawaii",
-        "documents":
-            [
-                "i'm kawaii",
-                "baka!",
-                "pantsu",
-                "idiot!",
-                "you're embarassing me!",
-                "don't look at my pantsu, baka!",
-                "chan",
-                "moe",
-                "san"
+                "sleepy",
+                "tired",
+                "rest",
+                "tire",
+                "bed",
+                "retire",
+                "sleep"
             ]
     }
 ];
@@ -145,20 +125,22 @@ for (let i = 0; i < classes.length; i++) {
 let trainingSet = [];
 
 // create a json object for each input-output pair
+let wordIndex = 0; // corresponds and maps to each word in the vocabulary
 categories.forEach((category, classIndex) => {
-    category.documents.forEach((document, documentIndex) => {
+    category.documents.forEach((document) => {
         let classification = {};
-        classification.input = bags[documentIndex];
+        classification.input = bags[wordIndex];
         classification.output = outputs[classIndex];
         trainingSet.push(classification); // add the new json object to the training set
+        wordIndex++;
     });
 });
 
-let NN = neataptic.architect.Perceptron(bags[0].length, 200, 20, 200, 200, 7, 200, classes.length);
+let NN = neataptic.architect.Perceptron(bags[0].length, bags[0].length + classes.length, classes.length);
 
 NN.train(trainingSet, {
     log: 10,
-    iterations: 100000
+    iterations: 50000
 });
 
 let cleanSentence = (sentence, wordList) => {
@@ -174,6 +156,5 @@ let cleanSentence = (sentence, wordList) => {
     return bag;
 };
 
-const intent1 = NN.activate(cleanSentence("Hungry, eat, baka!", words));
-const intent2 = NN.activate(cleanSentence("sleepy", words));
-const intent3 = NN.activate(cleanSentence("baka, i'm embarrased!", words));
+const intent1 = NN.activate(cleanSentence("Saber is hungry. Feed her! She's freaking starving!", words));
+const intent2 = NN.activate(cleanSentence("She is tired and sleepy.", words));
