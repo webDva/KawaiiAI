@@ -11,26 +11,14 @@ const categories = [ // a list of classes of documents
         "class": "hungry", // a class of documents
         "documents": // a list of documents
             [
-                "hungry", // a single document
-                "eat",
-                "Feed",
-                "dinner",
-                "Sandwich",
-                "Saber",
-                "starving"
+                "food" // a single document
             ]
     },
     {
         "class": "sleepy",
         "documents":
             [
-                "sleepy",
-                "tired",
-                "rest",
-                "tire",
-                "bed",
-                "retire",
-                "sleep"
+                "bed"
             ]
     }
 ];
@@ -70,6 +58,9 @@ const cleanSentence = (sentence, wordList) => {
 
     // stem each word
     sentence = sentence.map(word => stemSingleWord(word));
+
+    // remove duplicate words
+    sentence = Array.from(new Set(sentence));
 
     // create a single bag of words vector
     const bag = makeBagOfWords(sentence, wordList);
@@ -150,8 +141,9 @@ let NN = neataptic.architect.Perceptron(bags[0].length, bags[0].length + classes
 
 NN.train(trainingSet, {
     log: 10,
-    iterations: 500000
+    iterations: 100000
 });
 
-const intent1 = NN.activate(cleanSentence("Saber is hungry. Feed her! She's freaking starving!", words));
-const intent2 = NN.activate(cleanSentence("She is tired and sleepy.", words));
+const intent1 = NN.activate(cleanSentence("food food", words));
+const intent2 = NN.activate(cleanSentence("bed", words));
+const intent3 = NN.activate(cleanSentence("neither", words));
