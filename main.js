@@ -1,3 +1,8 @@
+/* 
+Get the product out there. Move fast. Make the MVP as quick as possible.
+Remember your commitment to your missions.
+*/
+
 const natural = require("natural");
 const neataptic = require("neataptic");
 
@@ -50,6 +55,37 @@ const categories = [ // a list of classes of documents
     }
 ];
 
+/////////////////////////////////////////////////////
+// Utility helper functions
+/////////////////////////////////////////////////////
+
+// tokenizer function. returns an array of strings
+const tokenizeDocument = (document) => {
+    const naturalTokenizer = new natural.TreebankWordTokenizer();
+    return naturalTokenizer.tokenize(document);
+};
+
+// stems a word (and lowercases it too). returns a string
+const stemSingleWord = (word) => {
+    return natural.LancasterStemmer.stem(word);
+};
+
+// returns a single bag of words vector using a document and its vocabulary superset
+// document is a tokenized and stemmed sentence
+const makeBagOfWords = (document, vocabulary) => {
+    let bag = [];
+    vocabulary.forEach((word) => {
+        if (document.includes(word))
+            bag.push(1);
+        else
+            bag.push(0);
+    });
+    return bag;
+};
+
+/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+
 // organization of data structures
 let words = [];
 let documents = []; // each element in documents is an array of the tokenized words in a single document
@@ -58,10 +94,9 @@ let classes = [];
 // processing each document
 
 // first tokenize each word in the document
-let tokenizer = new natural.TreebankWordTokenizer();
 categories.forEach((category) => {
     category.documents.forEach((sentence) => {
-        let tokenizedWords = tokenizer.tokenize(sentence);
+        let tokenizedWords = tokenizeDocument(sentence);
         // add each word to the list of words
         tokenizedWords.forEach(i => words.push(i));
         // add each document to the list of documents
@@ -74,7 +109,7 @@ categories.forEach((category) => {
 // now stem and lower each word and remove duplicates
 
 // stem each word (also lowercases each word)
-words = words.map(word => natural.LancasterStemmer.stem(word));
+words = words.map(word => stemSingleWord(word));
 
 // remove duplicates
 words = Array.from(new Set(words));
@@ -84,18 +119,11 @@ words = Array.from(new Set(words));
 let bags = []; // dataset
 
 documents.forEach((document) => {
-    let bag = []; // individual bag of words
-
     // stem each word
-    document = document.map(word => natural.LancasterStemmer.stem(word));
+    document = document.map(word => stemSingleWord(word));
 
-    // create a single bag of words vector
-    words.forEach((word) => {
-        if (document.includes(word))
-            bag.push(1);
-        else
-            bag.push(0);
-    });
+    // create an individual bag of words vector
+    const bag = makeBagOfWords(document, words);
 
     // add the new bag of word to the list of bags that is the dataset
     bags.push(bag);
@@ -126,32 +154,26 @@ categories.forEach((category, classIndex) => {
     });
 });
 
-let NN = neataptic.architect.Perceptron(bags[0].length, 3, classes.length);
+let NN = neataptic.architect.Perceptron(bags[0].length, 200, 20, 200, 200, 7, 200, classes.length);
 
 NN.train(trainingSet, {
     log: 10,
-    iterations: 90000
+    iterations: 100000
 });
 
 let cleanSentence = (sentence, wordList) => {
     // tokenize the sentence
-    sentence = tokenizer.tokenize(sentence);
+    sentence = tokenizeDocument(sentence);
 
     // stem each word
-    sentence = sentence.map(word => natural.LancasterStemmer.stem(word));
+    sentence = sentence.map(word => stemSingleWord(word));
 
     // create a single bag of words vector
-    let bag = [];
-    wordList.forEach((word) => {
-        if (sentence.includes(word))
-            bag.push(1);
-        else
-            bag.push(0);
-    });
+    const bag = makeBagOfWords(sentence, wordList);
 
     return bag;
 };
 
-const intent1 = NN.activate(cleanSentence("Saber is hungry.", words));
-const intent2 = NN.activate(cleanSentence("i'm too tired for that right now", words));
+const intent1 = NN.activate(cleanSentence("Hungry, eat, baka!", words));
+const intent2 = NN.activate(cleanSentence("sleepy", words));
 const intent3 = NN.activate(cleanSentence("baka, i'm embarrased!", words));
